@@ -28,6 +28,10 @@ import {
   Inbox,
   Send,
   X,
+  List,
+  Sun,
+  Shield,
+  Bell,
 } from 'lucide-angular';
 
 export const appConfig: ApplicationConfig = {
@@ -60,6 +64,10 @@ export const appConfig: ApplicationConfig = {
         Inbox,
         Send,
         X,
+        List,
+        Sun,
+        Shield,
+        Bell,
       })
     ),
   ],
