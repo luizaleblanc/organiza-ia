@@ -39,21 +39,28 @@ import {
               <img
                 src="assets/logo.png"
                 alt="Logo Organiza Aí"
-                class="h-10 w-auto object-contain transition-all dark:brightness-0 dark:invert"
+                class="h-16 w-auto object-contain transition-all dark:brightness-0 dark:invert"
               />
             </a>
           </div>
 
           <div class="flex items-center">
-            <div class="relative">
+            <div class="relative z-[60]">
               <button
                 (click)="toggleDropdown()"
                 class="flex items-center gap-3 py-2 px-3 rounded-full hover:bg-blue-50 dark:hover:bg-gray-900 transition-colors border border-transparent hover:border-blue-100 dark:hover:border-gray-800 focus:outline-none"
               >
                 <div
-                  class="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center border border-blue-200 dark:border-blue-500/30"
+                  class="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center border border-blue-200 dark:border-blue-500/30 overflow-hidden"
                 >
+                  <img
+                    *ngIf="userPhoto"
+                    [src]="userPhoto"
+                    alt="Foto de perfil"
+                    class="h-full w-full object-cover"
+                  />
                   <lucide-icon
+                    *ngIf="!userPhoto"
                     [img]="icons.User"
                     [size]="18"
                     class="text-blue-600 dark:text-blue-400"
@@ -157,6 +164,7 @@ import {
 export class DashboardLayoutComponent implements OnInit {
   dropdownOpen = false;
   isSettingsPage = false;
+  userPhoto: string | null = null;
 
   readonly icons = {
     ArrowLeft,
@@ -171,6 +179,12 @@ export class DashboardLayoutComponent implements OnInit {
 
   ngOnInit() {
     this.checkTheme();
+    if (typeof localStorage !== 'undefined') {
+      const savedPhoto = localStorage.getItem('userPhoto');
+      if (savedPhoto) {
+        this.userPhoto = savedPhoto;
+      }
+    }
   }
 
   toggleDropdown() {
@@ -185,28 +199,26 @@ export class DashboardLayoutComponent implements OnInit {
     console.log('--- LOGOUT INICIADO ---');
     this.dropdownOpen = false;
 
+    const currentTheme = localStorage.getItem('theme');
+
     localStorage.clear();
     sessionStorage.clear();
 
+    if (currentTheme) {
+      localStorage.setItem('theme', currentTheme);
+    }
+
+    // CORREÇÃO: Usar a rota /login
     this.router
-      .navigate(['/auth/login'])
+      .navigate(['/login'])
       .then((success) => {
-        if (success) {
-          console.log('Navegação via Router bem sucedida');
-        } else {
-          console.warn('Router falhou, tentando fallback...');
-          this.forceRedirect();
+        if (!success) {
+          window.location.href = '/login';
         }
       })
-      .catch((err) => {
-        console.error('Erro no Router:', err);
-        this.forceRedirect();
+      .catch(() => {
+        window.location.href = '/login';
       });
-  }
-
-  forceRedirect() {
-    console.log('Forçando redirecionamento via window.location...');
-    window.location.href = '/login';
   }
 
   checkTheme() {
