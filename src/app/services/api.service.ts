@@ -28,4 +28,13 @@ export class ApiService {
       throw error;
     }
   }
+async enviarMensagemIA(texto: string): Promise<any> {
+  try {
+    const response = await this.api.post('/ia/chat', { mensagem: texto });
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao falar com a IA no Service:", error);
+    throw error;
+  }
+}
 }
