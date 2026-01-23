@@ -1,0 +1,48 @@
+<button class="chat-toggle-btn" (click)="alternarChat()">
+  <span *ngIf="!chatAberto">💬</span>
+  <span *ngIf="chatAberto">✖️</span>
+</button>
+
+<div class="chat-container" *ngIf="chatAberto">
+  
+  <div class="chat-header">
+    <span>Assistente Organiza-IA</span>
+    <button (click)="alternarChat()">_</button> </div>
+
+  <div class="chat-messages">
+    <div *ngFor="let msg of mensagens" 
+         [ngClass]="{'msg-usuario': msg.autor === 'usuario', 'msg-ia': msg.autor === 'ia'}">
+      <div class="balao">
+        {{ msg.conteudo }}
+        <small>{{ msg.horario | date:'HH:mm' }}</small>
+      </div>
+    </div>
+
+    <div *ngIf="carregando" class="msg-ia typing">
+      <div class="balao">
+        <span> IA Digitando...</span>
+      </div>
+    </div>
+    
+    <div #scrollAnchor></div>
+  </div>
+
+  <div class="chat-input">
+    <input [(ngModel)]="novaMensagem" 
+           (keyup.enter)="enviarMensagem()" 
+           placeholder="Digite sua dúvida...">
+    <button (click)="enviarMensagem()">✈️</button>
+  </div>
+</div>
+<div class="chat-container" *ngIf="chatAberto" [ngClass]="{'dark-theme': isDarkMode}">
+  
+  <div class="chat-header">
+    <span>Assistente Organiza-IA</span>
+    <div class="header-actions">
+      <button (click)="alternarTema()" class="icon-btn">
+        {{ isDarkMode ? '☀️' : '🌙' }}
+      </button>
+      <button (click)="alternarChat()" class="icon-btn">_</button>
+    </div>
+  </div>
+  </div>

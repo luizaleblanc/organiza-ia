@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import axios from 'axios';
+import { environment } from '../../environments/environment'; 
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
   private api = axios.create({
-    baseURL: 'http://localhost:3000',
+    baseURL:'http://localhost:3000', 
   });
 
   constructor() { }
@@ -28,13 +29,14 @@ export class ApiService {
       throw error;
     }
   }
-async enviarMensagemIA(texto: string): Promise<any> {
-  try {
-    const response = await this.api.post('/ia/chat', { mensagem: texto });
-    return response.data;
-  } catch (error) {
-    console.error("Erro ao falar com a IA no Service:", error);
-    throw error;
+
+  async enviarMensagemIA(texto: string): Promise<any> {
+    try {
+      const response = await this.api.post('/ia/chat', { mensagem: texto });
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao falar com a IA no Service:", error);
+      throw error;
+    }
   }
-}
 }
