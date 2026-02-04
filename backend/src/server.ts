@@ -74,7 +74,6 @@ app.post("/ia/chat", async (req, res) => {
       ? faturas.map((f: any) => `- ${f.description}: R$ ${f.value}`).join("\n")
       : "Sem faturas.";
 
-// Usando o nome técnico específico da versão estável
 const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-001:generateContent?key=${apiKey}`;
   const corpoRequisicao = {
       contents: [{
