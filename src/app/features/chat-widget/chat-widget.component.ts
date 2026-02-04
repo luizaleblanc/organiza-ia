@@ -14,13 +14,18 @@ export class ChatWidgetComponent {
   private apiService = inject(ApiService);
   @ViewChild('scrollAnchor') private scrollAnchor!: ElementRef;
 
-  chatAberto: boolean = false;
-  isDarkMode: boolean = false;
+  chatAberto: boolean = true; 
+  isDarkMode: boolean = true;
   carregando: boolean = false;
   boasVindasEnviada: boolean = false;
 
   novaMensagem: string = '';
   mensagens: { autor: 'usuario' | 'ia', conteudo: string, horario: Date }[] = [];
+
+  constructor() {
+    // Envia a mensagem de boas-vindas assim que o componente inicia
+    this.enviarBoasVindas();
+  }
 
   alternarChat() {
     this.chatAberto = !this.chatAberto;
@@ -31,12 +36,14 @@ export class ChatWidgetComponent {
   }
 
   private enviarBoasVindas() {
-    this.mensagens.push({
-      autor: 'ia',
-      conteudo: 'Olá! Sou o Assistente Organiza-IA. 🤖 Como posso te ajudar hoje?',
-      horario: new Date()
-    });
-    this.boasVindasEnviada = true;
+    if (!this.boasVindasEnviada) {
+      this.mensagens.push({
+        autor: 'ia',
+        conteudo: 'Olá! Sou o Assistente Organiza-IA. 🤖 Como posso te ajudar hoje?',
+        horario: new Date()
+      });
+      this.boasVindasEnviada = true;
+    }
   }
 
   alternarTema() {
@@ -62,19 +69,40 @@ export class ChatWidgetComponent {
   async enviarMensagem() {
     if (this.novaMensagem.trim() && !this.carregando) {
       const textoParaEnviar = this.novaMensagem;
-      this.mensagens.push({ autor: 'usuario', conteudo: textoParaEnviar, horario: new Date() });
-      this.novaMensagem = '';
-      this.scrollToBottom();
       
+      this.mensagens.push({ 
+        autor: 'usuario', 
+        conteudo: textoParaEnviar, 
+        horario: new Date() 
+      });
+      
+      this.novaMensagem = ''; 
+      this.scrollToBottom();
       this.carregando = true;
+
       try {
         const data = await this.apiService.enviarMensagemIA(textoParaEnviar);
-        this.mensagens.push({ autor: 'ia', conteudo: data.resposta, horario: new Date() });
-        this.scrollToBottom();
+        
+        const conteudoIA = data && data.resposta 
+          ? data.resposta 
+          : "Desculpe, recebi uma resposta vazia do servidor.";
+
+        this.mensagens.push({ 
+          autor: 'ia', 
+          conteudo: conteudoIA, 
+          horario: new Date() 
+        });
+
       } catch (error) {
-        console.error("Erro:", error);
+        console.error("Erro na comunicação com a API:", error);
+        this.mensagens.push({ 
+          autor: 'ia', 
+          conteudo: "⚠️ Erro de conexão. Verifique se o servidor está rodando na porta 3000.", 
+          horario: new Date() 
+        });
       } finally {
         this.carregando = false;
+        this.scrollToBottom();
       }
     }
   }

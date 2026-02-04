@@ -6,9 +6,9 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class ApiService {
-  private api = axios.create({
-    baseURL:'http://localhost:3000', 
-  });
+private api = axios.create({
+  baseURL: 'http://127.0.0.1:3000', 
+});
 
   constructor() { }
 
@@ -31,12 +31,13 @@ export class ApiService {
   }
 
   async enviarMensagemIA(texto: string): Promise<any> {
-    try {
-      const response = await this.api.post('/ia/chat', { mensagem: texto });
-      return response.data;
-    } catch (error) {
-      console.error("Erro ao falar com a IA no Service:", error);
-      throw error;
-    }
+  try {
+    const response = await this.api.post('/ia/chat', { mensagem: texto });
+    return response.data;
+  } catch (error: any) {
+    console.error("Status do Erro:", error.response?.status);
+    console.error("Dados do Erro:", error.response?.data);
+    throw error;
   }
+}
 }
