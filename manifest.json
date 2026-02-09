@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Assistente de Faturas IA",
+  "version": "1.0",
+  "description": "Contador de faturas e assistente de pagamento com IA.",
+  "permissions": ["activeTab", "storage"],
+  "action": {
+    "default_popup": "dist/ai-organizer-angular/index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "dist/ai-organizer-angular/polyfills.js",
+        "dist/ai-organizer-angular/main.js",
+        "content.js"
+      ],
+      "css": ["dist/ai-organizer-angular/styles.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["dist/ai-organizer-angular/*.js", "dist/ai-organizer-angular/*.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

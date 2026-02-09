@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-
+import { ChatWidgetComponent } from './features/chat-widget/chat-widget.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
-  template: `<router-outlet></router-outlet>`,
+  imports: [RouterOutlet, ChatWidgetComponent],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss'
 })
+
 export class AppComponent implements OnInit {
   ngOnInit() {
     this.checkTheme();

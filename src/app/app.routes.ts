@@ -6,12 +6,27 @@ import { DashboardPageComponent } from './features/dashboard/dashboard-page/dash
 import { FeaturesPlaceholderComponent } from './features/features-placeholder/features-placeholder.component';
 import { SettingsPageComponent } from './features/settings/settings-page/settings-page.component';
 
+import { authGuard } from './auth/auth.guard';
+
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'dashboard', component: DashboardPageComponent },
-  { path: 'features', component: FeaturesPlaceholderComponent },
-  { path: 'settings', component: SettingsPageComponent },
+  
+  { 
+    path: 'dashboard', 
+    component: DashboardPageComponent, 
+    canActivate: [authGuard] 
+  },
+  { 
+    path: 'features', 
+    component: FeaturesPlaceholderComponent, 
+    canActivate: [authGuard] 
+  },
+  { 
+    path: 'settings', 
+    component: SettingsPageComponent, 
+    canActivate: [authGuard] 
+  },
 ];

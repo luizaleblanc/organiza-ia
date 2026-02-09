@@ -2,8 +2,9 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule } from 'lucide-angular';
+import { LucideAngularModule, Eye, EyeOff, Mail, Lock } from 'lucide-angular'; 
 import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.component';
+import { ApiService } from '../../../services/api.service';
 
 @Component({
   selector: 'app-login',
@@ -12,133 +13,115 @@ import { AuthLayoutComponent } from '../components/auth-layout/auth-layout.compo
     CommonModule,
     RouterModule,
     FormsModule,
-    LucideAngularModule,
+    LucideAngularModule, 
     AuthLayoutComponent,
   ],
   template: `
     <app-auth-layout>
       <form (submit)="login()" class="space-y-5">
         <div class="space-y-1">
-          <label
-            class="text-xs font-bold text-[#243a5f] dark:text-blue-200 ml-1 uppercase tracking-wider"
-            >E-mail ou Usuário</label
-          >
-          <div class="relative">
+          <label class="text-xs font-bold text-[#243a5f] dark:text-blue-200 ml-1 uppercase tracking-wider">
+            E-mail ou Usuário
+          </label>
+          <div class="relative flex items-center">
+            <lucide-icon 
+              [img]="icons.Mail" 
+              class="absolute left-4 text-slate-400 z-10" 
+              [size]="18">
+            </lucide-icon>
+            
             <input
               [(ngModel)]="email"
               name="email"
               type="email"
-              class="w-full px-4 py-3 bg-slate-50 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 rounded-lg hover:border-[#243a5f] dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-[#243a5f]/30 dark:focus:ring-blue-500/30 transition text-[#243a5f] dark:text-white"
+              class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#243a5f]/30 transition text-[#243a5f] dark:text-white"
+              placeholder="seu@email.com"
               required
             />
           </div>
         </div>
 
         <div class="space-y-1">
-          <label
-            class="text-xs font-bold text-[#243a5f] dark:text-blue-200 ml-1 uppercase tracking-wider"
-            >Senha</label
-          >
-          <div class="relative">
+          <label class="text-xs font-bold text-[#243a5f] dark:text-blue-200 ml-1 uppercase tracking-wider">
+            Senha
+          </label>
+          <div class="relative flex items-center">
+            <lucide-icon 
+              [img]="icons.Lock" 
+              class="absolute left-4 text-slate-400 z-10" 
+              [size]="18">
+            </lucide-icon>
+
             <input
               [(ngModel)]="password"
               name="password"
-              type="password"
-              class="w-full px-4 py-3 bg-slate-50 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 rounded-lg hover:border-[#243a5f] dark:hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-[#243a5f]/30 dark:focus:ring-blue-500/30 transition text-[#243a5f] dark:text-white"
+              [type]="showPassword ? 'text' : 'password'"
+              class="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#243a5f]/30 transition text-[#243a5f] dark:text-white"
+              placeholder="••••••"
               required
             />
-            <button
+
+            <button 
               type="button"
-              class="absolute right-3 top-3 text-slate-400 hover:text-[#243a5f] dark:hover:text-white transition-colors"
+              (click)="showPassword = !showPassword"
+              class="absolute right-4 p-1 text-slate-400 hover:text-[#243a5f] focus:outline-none transition-colors z-10"
             >
-              <lucide-icon name="eye-off" [size]="20"></lucide-icon>
+              <lucide-icon [img]="showPassword ? icons.EyeOff : icons.Eye" [size]="18"></lucide-icon>
             </button>
           </div>
         </div>
 
         <button
           type="submit"
-          class="w-full bg-[#243a5f] hover:bg-[#1a2a4a] dark:bg-[#243a5f] dark:hover:bg-[#324b7a] dark:border dark:border-slate-700 text-white font-bold py-3.5 rounded-full transition transform active:scale-[0.99] text-sm uppercase tracking-widest shadow-md mt-2"
+          class="w-full bg-[#243a5f] hover:bg-[#1a2a4a] text-white font-bold py-3.5 rounded-full transition transform active:scale-[0.99] text-sm uppercase tracking-widest shadow-md mt-2"
         >
           Entrar
         </button>
 
-        <div class="text-center pt-2">
-          <a
-            routerLink="/forgot-password"
-            class="text-sm font-bold text-[#243a5f] dark:text-blue-300 hover:underline cursor-pointer"
-          >
-            ESQUECEU SUA SENHA?
+        <div class="text-center mt-8 pt-4 border-t border-slate-100 dark:border-gray-700">
+          <p class="text-slate-500 text-sm mb-3">Não tem uma conta?</p>
+          <a routerLink="/register" class="text-[#243a5f] dark:text-blue-300 font-bold text-base hover:underline uppercase">
+            INSCREVER-SE
           </a>
         </div>
       </form>
-
-      <div class="relative my-8">
-        <div class="absolute inset-0 flex items-center">
-          <div
-            class="w-full border-t border-slate-200 dark:border-gray-700"
-          ></div>
-        </div>
-        <div class="relative flex justify-center text-xs">
-          <span
-            class="px-4 text-slate-400 bg-white dark:bg-gray-900 transition-colors"
-            >ou</span
-          >
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-3">
-        <button class="social-btn">
-          <img
-            src="https://www.svgrepo.com/show/475656/google-color.svg"
-            alt="Google"
-          />
-          <span>Continuar com o Google</span>
-        </button>
-
-        <button class="social-btn">
-          <img
-            src="https://www.svgrepo.com/show/475647/facebook-color.svg"
-            alt="Facebook"
-          />
-          <span>Continuar com o Facebook</span>
-        </button>
-
-        <button class="social-btn">
-          <img
-            src="assets/apple.png"
-            alt="Apple"
-            class="rounded-full dark:invert"
-          />
-          <span>Continuar com a Apple</span>
-        </button>
-      </div>
-
-      <div
-        class="text-center mt-8 pt-4 border-t border-slate-100 dark:border-gray-800"
-      >
-        <p class="text-slate-500 dark:text-gray-400 text-sm mb-3">
-          Não tem uma conta?
-        </p>
-        <a
-          routerLink="/register"
-          class="text-[#243a5f] dark:text-blue-300 font-bold text-base hover:underline uppercase tracking-wide cursor-pointer"
-        >
-          INSCREVER-SE
-        </a>
-      </div>
     </app-auth-layout>
   `,
 })
 export class LoginComponent {
   email = '';
   password = '';
-  private router = inject(Router);
+  showPassword = false; 
+  
+  readonly icons = { Eye, EyeOff, Mail, Lock };
 
-  login() {
+  private router = inject(Router);
+  private apiService = inject(ApiService);
+
+  async login() {
     if (this.email && this.password) {
-      localStorage.setItem('user_token', 'demo-token');
-      this.router.navigate(['/dashboard']);
+      try {
+        const response = await this.apiService.login({
+          email: this.email,
+          password: this.password
+        });
+
+        if (response.token) {
+          localStorage.setItem('user_token', response.token);
+        }
+
+        if (response.user && response.user.name) {
+          localStorage.setItem('user_name', response.user.name);
+        }
+
+        this.router.navigate(['/dashboard']);
+        
+      } catch (error) {
+        console.error('Erro no login:', error);
+        alert('E-mail ou senha incorretos.');
+      }
+    } else {
+      alert('Por favor, preencha todos os campos!');
     }
   }
 }

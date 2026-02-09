@@ -1,0 +1,39 @@
+<div class="wrapper" [class.aberto]="chatAberto">
+  <button class="chat-toggle-btn" (click)="alternarChat()">
+    <span>{{ chatAberto ? '✕' : '💬' }}</span>
+  </button>
+
+  <div class="chat-container" *ngIf="chatAberto">
+    <div class="chat-header">
+      <div class="info">
+        <div class="status-dot"></div>
+        <span>Assistente Organiza-IA</span>
+      </div>
+      <button class="close-min" (click)="alternarChat()">_</button>
+    </div>
+
+    <div class="chat-messages" #scrollContainer>
+      <div *ngFor="let msg of mensagens" [ngClass]="['msg-wrapper', msg.autor]">
+        <div class="balao">
+          <p>{{ msg.conteudo }}</p>
+          <small>{{ msg.horario | date:'HH:mm' }}</small>
+        </div>
+      </div>
+
+      <div *ngIf="carregando" class="msg-wrapper ia">
+        <div class="balao typing">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input">
+      <input #msgInput [(ngModel)]="novaMensagem" 
+             (keyup.enter)="enviarMensagem()" 
+             placeholder="Como posso ajudar?">
+      <button (click)="enviarMensagem()" [disabled]="carregando || !novaMensagem">
+        {{ carregando ? '...' : '➤' }}
+      </button>
+    </div>
+  </div>
+</div>
