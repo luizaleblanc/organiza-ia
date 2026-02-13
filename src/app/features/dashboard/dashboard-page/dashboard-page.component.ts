@@ -6,6 +6,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { RouterModule } from '@angular/router';
+import { ChatWidgetComponent } from '../../chat-widget/chat-widget.component';
 
 interface Bill {
   id: number;
@@ -25,6 +26,7 @@ interface Bill {
     LucideAngularModule,
     BaseChartDirective,
     RouterModule,
+    ChatWidgetComponent,
   ],
   template: `
     <app-dashboard-layout>
@@ -62,7 +64,7 @@ interface Bill {
                       'bg-blue-600 text-white font-bold shadow-md':
                         viewMode === 'charts',
                       'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800 font-medium':
-                        viewMode !== 'charts'
+                        viewMode !== 'charts',
                     }"
                     class="px-3 py-1 rounded-full text-sm transition-all"
                   >
@@ -74,7 +76,7 @@ interface Bill {
                       'bg-blue-600 text-white font-bold shadow-md':
                         viewMode === 'topics',
                       'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800 font-medium':
-                        viewMode !== 'topics'
+                        viewMode !== 'topics',
                     }"
                     class="px-3 py-1 rounded-full text-sm transition-all"
                   >
@@ -101,8 +103,8 @@ interface Bill {
               <div class="w-full">
                 <div
                   class="p-4 rounded-lg border transition-colors duration-300
-                            bg-gray-50 dark:bg-[#111111] 
-                            border-gray-200 dark:border-gray-800"
+                           bg-gray-50 dark:bg-[#111111] 
+                           border-gray-200 dark:border-gray-800"
                 >
                   <h3
                     class="font-semibold text-gray-700 dark:text-gray-200 mb-3"
@@ -154,8 +156,8 @@ interface Bill {
             <div *ngIf="viewMode === 'topics'" class="space-y-6">
               <div
                 class="rounded-lg p-4 border transition-colors duration-300
-                          bg-gray-50 dark:bg-[#111111] 
-                          border-gray-200 dark:border-gray-800"
+                           bg-gray-50 dark:bg-[#111111] 
+                           border-gray-200 dark:border-gray-800"
               >
                 <div
                   class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-gray-800"
@@ -205,8 +207,8 @@ interface Bill {
 
               <div
                 class="rounded-lg p-4 border transition-colors duration-300
-                          bg-gray-50 dark:bg-[#111111] 
-                          border-gray-200 dark:border-gray-800"
+                           bg-gray-50 dark:bg-[#111111] 
+                           border-gray-200 dark:border-gray-800"
               >
                 <div
                   class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-gray-800"
@@ -456,6 +458,8 @@ interface Bill {
           </div>
         </div>
       </div>
+
+      <app-chat-widget></app-chat-widget>
     </app-dashboard-layout>
   `,
   styles: [
