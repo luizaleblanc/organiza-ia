@@ -738,7 +738,7 @@ export class SettingsPageComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private location: Location,
-    private router: Router
+    private router: Router,
   ) {
     this.settingsForm = this.fb.group({
       nome: ['Luiza LeBlanc'],
@@ -755,7 +755,7 @@ export class SettingsPageComponent implements OnInit {
           Validators.required,
           Validators.minLength(8),
           Validators.pattern(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$!%*?&])[A-Za-z\d@#$!%*?&]{8,}$/
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$!%*?&])[A-Za-z\d@#$!%*?&]{8,}$/,
           ),
         ],
       ],
@@ -816,7 +816,7 @@ export class SettingsPageComponent implements OnInit {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia(
-        '(prefers-color-scheme: dark)'
+        '(prefers-color-scheme: dark)',
       ).matches;
 
       if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
@@ -853,7 +853,7 @@ export class SettingsPageComponent implements OnInit {
 
     setTimeout(() => {
       this.showNotification = false;
-    }, 3000);
+    }, 8000);
   }
 
   togglePasswordVisibility(field: 'current' | 'new' | 'confirm') {

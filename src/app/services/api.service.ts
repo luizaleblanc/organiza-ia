@@ -6,7 +6,7 @@ import axios from 'axios';
 })
 export class ApiService {
   private api = axios.create({
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://127.0.0.1:8000/api',
   });
 
   constructor() {
@@ -46,5 +46,13 @@ export class ApiService {
       console.error('Dados do Erro:', error.response?.data);
       throw error;
     }
+  }
+
+  async analisarFatura(file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await this.api.post('/analyze-invoice', formData);
+    return response.data;
   }
 }

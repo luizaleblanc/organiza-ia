@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, inject, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardLayoutComponent } from '../../../shared/components/dashboard-layout/dashboard-layout.component';
 import { UploadCardComponent } from '../upload-cart/upload-card.component';
@@ -6,7 +6,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { RouterModule } from '@angular/router';
-import { ChatWidgetComponent } from '../../chat-widget/chat-widget.component';
+import { ApiService } from '../../../services/api.service';
 
 interface Bill {
   id: number;
@@ -14,6 +14,17 @@ interface Bill {
   category: string;
   amount: number;
   status: 'Processada' | 'Pendente' | 'Erro';
+}
+
+interface Transaction {
+  description: string;
+  amount: number;
+}
+
+interface AnalyzedCategory {
+  label: string;
+  value: number;
+  transactions: Transaction[];
 }
 
 @Component({
@@ -26,12 +37,31 @@ interface Bill {
     LucideAngularModule,
     BaseChartDirective,
     RouterModule,
-    ChatWidgetComponent,
   ],
   template: `
     <app-dashboard-layout>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
         <div class="lg:col-span-2 flex flex-col gap-6">
+          <div
+            *ngIf="errorMessage"
+            class="bg-red-500/10 border border-red-500/50 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl flex items-center gap-3 animate-fade-in text-sm font-medium"
+          >
+            <svg
+              class="w-5 h-5 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            {{ errorMessage }}
+          </div>
+
           <app-upload-card
             (fileUploaded)="onFileUploaded($event)"
           ></app-upload-card>
@@ -92,6 +122,7 @@ interface Bill {
             >
               <div class="w-full max-w-[300px]">
                 <canvas
+                  [hidden]="pieChartData.datasets[0].data.length === 0"
                   baseChart
                   [data]="pieChartData"
                   [type]="pieChartType"
@@ -114,37 +145,65 @@ interface Bill {
                   <div class="space-y-3">
                     <div class="flex justify-between text-sm items-center">
                       <span class="text-gray-500 dark:text-gray-400"
-                        >Total Detectado</span
+                        >Total gasto no período</span
                       >
                       <span
                         class="font-bold text-gray-900 dark:text-white text-lg"
-                        >R$ 1.245,50</span
+                        >R$
+                        {{ pendingBill?.amount?.toFixed(2) || '0.00' }}</span
                       >
                     </div>
+
                     <div
                       class="w-full border-t border-gray-200 dark:border-gray-700"
                     ></div>
-                    <div class="flex justify-between text-sm">
+
+                    <div *ngIf="topCategorias.length > 0" class="mt-2">
+                      <span
+                        class="text-gray-500 dark:text-gray-400 text-sm block mb-2"
+                      >
+                        Maior parte concentrada em:
+                      </span>
+                      <ul
+                        class="text-sm text-gray-700 dark:text-gray-300 list-disc pl-4 space-y-1"
+                      >
+                        <li *ngFor="let topCat of topCategorias">
+                          {{ topCat.label }}
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div
+                      class="w-full border-t border-gray-200 dark:border-gray-700 mt-2"
+                    ></div>
+
+                    <div
+                      class="flex justify-between text-sm pt-2"
+                      *ngIf="maiorGasto"
+                    >
                       <span class="text-gray-500 dark:text-gray-400"
-                        >Maior Gasto Mensal</span
+                        >Maior Gasto</span
                       >
                       <span class="font-bold text-gray-900 dark:text-white">
-                        R$ 520,00
+                        R$ {{ maiorGasto.value.toFixed(2) }}
                         <span
                           class="font-normal text-gray-500 dark:text-gray-400"
-                          >(Alimentação)</span
+                          >({{ maiorGasto.label }})</span
                         >
                       </span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div
+                      class="flex justify-between text-sm"
+                      *ngIf="menorGasto"
+                    >
                       <span class="text-gray-500 dark:text-gray-400"
-                        >Menor Gasto Mensal</span
+                        >Menor Gasto</span
                       >
                       <span class="font-bold text-gray-900 dark:text-white">
-                        R$ 15,90
+                        R$ {{ menorGasto.value.toFixed(2) }}
                         <span
                           class="font-normal text-gray-500 dark:text-gray-400"
-                          >(Transporte)</span
+                          >({{ menorGasto.label }})</span
                         >
                       </span>
                     </div>
@@ -155,6 +214,14 @@ interface Bill {
 
             <div *ngIf="viewMode === 'topics'" class="space-y-6">
               <div
+                *ngIf="analyzedCategories.length === 0"
+                class="text-center text-gray-500 dark:text-gray-400 py-4"
+              >
+                Nenhuma categoria detalhada encontrada pela IA.
+              </div>
+
+              <div
+                *ngFor="let cat of analyzedCategories; let idx = index"
                 class="rounded-lg p-4 border transition-colors duration-300
                            bg-gray-50 dark:bg-[#111111] 
                            border-gray-200 dark:border-gray-800"
@@ -168,95 +235,45 @@ interface Bill {
                     class="text-blue-600 dark:text-blue-400"
                   ></lucide-icon>
                   <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                    Alimentação
-                    <span
-                      class="text-gray-500 dark:text-gray-400 font-normal text-sm"
-                      >| 5 Transações</span
-                    >
+                    {{ idx + 1 }}. {{ cat.label }}
                   </h3>
                 </div>
-                <div class="space-y-2">
-                  <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-600 dark:text-gray-300"
-                      >Supermercado XYZ</span
-                    >
-                    <span class="font-semibold text-red-500 dark:text-red-400"
-                      >R$ 520,00</span
-                    >
-                  </div>
-                  <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-600 dark:text-gray-300"
-                      >Restaurante Central</span
-                    >
-                    <span class="font-semibold text-red-500 dark:text-red-400"
-                      >R$ 85,50</span
-                    >
-                  </div>
-                  <div
-                    class="flex justify-between items-center font-bold pt-3 border-t border-gray-200 dark:border-gray-800 mt-3"
-                  >
-                    <span class="text-gray-900 dark:text-white text-base"
-                      >Total da Categoria</span
-                    >
-                    <span class="text-red-600 dark:text-red-500 text-base"
-                      >R$ 605,50</span
-                    >
-                  </div>
-                </div>
-              </div>
 
-              <div
-                class="rounded-lg p-4 border transition-colors duration-300
-                           bg-gray-50 dark:bg-[#111111] 
-                           border-gray-200 dark:border-gray-800"
-              >
-                <div
-                  class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200 dark:border-gray-800"
-                >
-                  <lucide-icon
-                    name="car"
-                    [size]="20"
-                    class="text-blue-600 dark:text-blue-400"
-                  ></lucide-icon>
-                  <h3 class="text-lg font-bold text-gray-900 dark:text-white">
-                    Transporte
-                    <span
-                      class="text-gray-500 dark:text-gray-400 font-normal text-sm"
-                      >| 3 Transações</span
-                    >
-                  </h3>
-                </div>
-                <div class="space-y-2">
-                  <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-600 dark:text-gray-300"
-                      >Gasolina Posto XP</span
-                    >
-                    <span class="font-semibold text-red-500 dark:text-red-400"
-                      >R$ 150,00</span
-                    >
-                  </div>
-                  <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-600 dark:text-gray-300">Uber</span>
-                    <span class="font-semibold text-red-500 dark:text-red-400"
-                      >R$ 15,90</span
+                <div class="space-y-2 mb-4">
+                  <div
+                    *ngFor="let t of cat.transactions"
+                    class="flex justify-between items-center text-sm"
+                  >
+                    <span class="text-gray-600 dark:text-gray-300">{{
+                      t.description
+                    }}</span>
+                    <span class="text-gray-900 dark:text-gray-100"
+                      >R$ {{ t.amount.toFixed(2) }}</span
                     >
                   </div>
                   <div
-                    class="flex justify-between items-center font-bold pt-3 border-t border-gray-200 dark:border-gray-800 mt-3"
+                    *ngIf="!cat.transactions || cat.transactions.length === 0"
+                    class="text-sm text-gray-500 italic"
                   >
-                    <span class="text-gray-900 dark:text-white text-base"
-                      >Total da Categoria</span
-                    >
-                    <span class="text-red-600 dark:text-red-500 text-base"
-                      >R$ 165,90</span
-                    >
+                    Transações não detalhadas na fatura.
                   </div>
+                </div>
+
+                <div
+                  class="flex justify-between items-center font-bold pt-3 border-t border-gray-200 dark:border-gray-800"
+                >
+                  <span class="text-gray-900 dark:text-white text-base"
+                    >Total da Categoria</span
+                  >
+                  <span class="text-red-600 dark:text-red-500 text-base"
+                    >R$ {{ cat.value.toFixed(2) }}</span
+                  >
                 </div>
               </div>
             </div>
 
             <div
-              class="flex justify-center border-t border-gray-100 dark:border-gray-800 pt-6"
+              class="flex justify-center border-t border-gray-100 dark:border-gray-800 pt-6 mt-6"
             >
               <button
                 (click)="confirmInvoiceToHistory()"
@@ -458,8 +475,6 @@ interface Bill {
           </div>
         </div>
       </div>
-
-      <app-chat-widget></app-chat-widget>
     </app-dashboard-layout>
   `,
   styles: [
@@ -496,6 +511,9 @@ interface Bill {
 export class DashboardPageComponent {
   @ViewChild(UploadCardComponent) uploadCard!: UploadCardComponent;
 
+  private apiService = inject(ApiService);
+  private ngZone = inject(NgZone);
+
   bills: Bill[] = [];
   showAnalysis = false;
   pendingBill: Bill | null = null;
@@ -503,6 +521,11 @@ export class DashboardPageComponent {
   showDeleteModal = false;
   showClearModal = false;
   itemToDeleteIndex: number | null = null;
+
+  isProcessing = false;
+  errorMessage: string | null = null;
+
+  analyzedCategories: AnalyzedCategory[] = [];
 
   public pieChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -515,10 +538,10 @@ export class DashboardPageComponent {
     },
   };
   public pieChartData: ChartData<'pie', number[], string | string[]> = {
-    labels: ['Alimentação', 'Transporte', 'Lazer', 'Saúde', 'Outros'],
+    labels: [],
     datasets: [
       {
-        data: [300, 150, 100, 80, 50],
+        data: [],
         backgroundColor: [
           '#263b63',
           '#3b82f6',
@@ -543,6 +566,27 @@ export class DashboardPageComponent {
     this.loadBillsFromLocalStorage();
   }
 
+  get maiorGasto(): AnalyzedCategory | null {
+    if (this.analyzedCategories.length === 0) return null;
+    return this.analyzedCategories.reduce((prev, current) =>
+      prev.value > current.value ? prev : current,
+    );
+  }
+
+  get menorGasto(): AnalyzedCategory | null {
+    if (this.analyzedCategories.length === 0) return null;
+    return this.analyzedCategories.reduce((prev, current) =>
+      prev.value < current.value ? prev : current,
+    );
+  }
+
+  get topCategorias(): AnalyzedCategory[] {
+    if (this.analyzedCategories.length === 0) return [];
+    return [...this.analyzedCategories]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 3);
+  }
+
   setViewMode(mode: 'charts' | 'topics'): void {
     this.viewMode = mode;
   }
@@ -554,18 +598,76 @@ export class DashboardPageComponent {
     }
   }
 
-  onFileUploaded(file: File): void {
-    console.log('Arquivo recebido:', file.name);
-    setTimeout(() => {
-      this.showAnalysis = true;
-      this.pendingBill = {
-        id: Date.now(),
-        date: new Date().toLocaleDateString('pt-BR'),
-        category: 'Fatura Importada',
-        amount: 1245.5,
-        status: 'Processada',
-      };
-    }, 800);
+  async onFileUploaded(file: File): Promise<void> {
+    this.ngZone.run(() => {
+      this.errorMessage = null;
+      this.isProcessing = true;
+      this.showAnalysis = false;
+      this.analyzedCategories = [];
+    });
+
+    try {
+      const response = await this.apiService.analisarFatura(file);
+
+      this.ngZone.run(() => {
+        this.analyzedCategories = (response.chart_data || []).map(
+          (cat: any) => ({
+            label: cat.label,
+            value: cat.value,
+            transactions: cat.transactions || [],
+          }),
+        );
+
+        this.pieChartData = {
+          labels: this.analyzedCategories.map((d) => d.label),
+          datasets: [
+            {
+              data: this.analyzedCategories.map((d) => d.value),
+              backgroundColor: [
+                '#263b63',
+                '#3b82f6',
+                '#60a5fa',
+                '#93c5fd',
+                '#cbd5e1',
+              ],
+              hoverBackgroundColor: [
+                '#1e2f4f',
+                '#2563eb',
+                '#3b82f6',
+                '#60a5fa',
+                '#94a3b8',
+              ],
+              borderWidth: 0,
+            },
+          ],
+        };
+
+        this.pendingBill = {
+          id: Date.now(),
+          date: new Date().toLocaleDateString('pt-BR'),
+          category: 'Fatura Processada (IA)',
+          amount: response.total_amount || 0,
+          status: 'Processada',
+        };
+
+        this.showAnalysis = true;
+        this.isProcessing = false;
+      });
+    } catch (error: any) {
+      this.ngZone.run(() => {
+        const errorPayload = error.response?.data;
+        console.error(
+          'FALHA DE INTEGRACAO:',
+          errorPayload ? JSON.stringify(errorPayload, null, 2) : error.message,
+        );
+        const detalheErro = errorPayload?.detail;
+        this.errorMessage =
+          typeof detalheErro === 'string'
+            ? detalheErro
+            : 'Falha na leitura do documento. Tente novamente.';
+        this.isProcessing = false;
+      });
+    }
   }
 
   confirmInvoiceToHistory(): void {
